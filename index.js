@@ -39,7 +39,5 @@ ws.on('connection', function connection(ws) {
         }
     });
 });
-
-server.listen(8099, function listening() {
-    console.log('Listening on %d', server.address().port);
-});
+var port = process.env.PORT || 1337;
+server.listen(port);
