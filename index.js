@@ -17,11 +17,11 @@ statistics['Maria'] = 0;
 statistics['John'] = 0;
 statistics['Joanna'] = 0;
 ws.on('connection', function connection(ws) {
-
+console.log(ws);
     clients.push(ws);
     for (client in clients) {
         try {
-            clients[client].send(JSON.stringify(statistics));
+            clients[client].emit('message',JSON.stringify(statistics));
         }catch (e){
 
         }
