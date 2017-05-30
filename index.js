@@ -4,40 +4,53 @@ const url = require('url');
 const ws = require('socket.io')(server);
 const path = require('path');
 
-var clients = [];
-var statistics = {};
+let clients = [];
+let busses = [];
 const express = require('express');
 app.use(express.static(__dirname + "/"));
-app.get('/',function(req,res){
-    res.sendFile(path.join(__dirname + '/index.html'));
+app.get('/bus', function (req, res) {
+    res.sendFile(path.join(__dirname + '/bus.html'));
 });
 
-statistics['George'] = 0;
-statistics['Maria'] = 0;
-statistics['John'] = 0;
-statistics['Joanna'] = 0;
+app.get('/', function (req, res) {
+    res.sendFile(path.join(__dirname + '/client.html'));
+});
+
 ws.on('connection', function connection(ws) {
-
-    clients.push(ws);
-    for (client in clients) {
-        try {
-            clients[client].send(JSON.stringify(statistics));
-        }catch (e){
-
+    console.log(ws);
+    let bus = false;
+    if (ws.protocol) {
+        prot = ws.protocol.split('-');
+        if (prot.length === 2) {
+            ws.busNr = prot[1];
+            busses.push(ws);
+            bus = true;
+        }
+        else {
+            clients.push(ws);
         }
     }
+    else {
+        clients.push(ws);
+    }
     ws.on('message', function incoming(message) {
-        if (message == 'George' || message == 'Maria' || message == 'John' || message == 'Joanna') {
-            statistics[message] += 1;
-            for (client in clients) {
-                try {
-                    clients[client].emit('message', JSON.stringify(statistics));
-                }catch (e){
-                    console.log("error")
+        console.log(message);
+
+        let data = JSON.parse(message);
+        if (bus === true) {
+            ws.lat = data.lat;
+            ws.lng = data.lng;
+        }
+        else {
+            let bussesSearch = {};
+            for (let i = 0; i < busses.length; i++) {
+                if (busses[i].busNr === data.busNr) {
+                    bussesSearch[i] = {lat: busses[i].lat, lng: busses[i].lng}
                 }
             }
+            ws.send(JSON.stringify(bussesSearch));
         }
     });
 });
-var port = process.env.PORT || 1337;
+let port = process.env.PORT || 1337;
 server.listen(port);
